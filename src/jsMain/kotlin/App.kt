@@ -1,0 +1,51 @@
+import react.*
+import react.dom.*
+import kotlinext.js.*
+import kotlinx.html.js.*
+import kotlinx.coroutines.*
+
+private val scope = MainScope()
+
+val App = functionalComponent<RProps> {
+    val (shoppingList, setShoppingList) = useState(emptyList<ShoppingListItem>())
+
+    useEffect(dependencies = listOf()) {
+        scope.launch {
+            setShoppingList(getShoppingList())
+        }
+    }
+
+    h1 {
+        +"Full-Stack Shopping List"
+    }
+    ul {
+        shoppingList.sortedBy(ShoppingListItem::priority).forEach { item ->
+            li {
+                key = item.toString()
+                +"[${item.priority}] ${item.name} "
+
+                attrs.onClickFunction = {
+                    scope.launch {
+                        deleteShoppingListItem(item)
+                        setShoppingList(getShoppingList())
+                    }
+                }
+
+            }
+
+        }
+    }
+
+    child(
+            InputComponent,
+            props = jsObject {
+                onSubmit = { input ->
+                    val cartItem = ShoppingListItem(input.replace("!", ""), input.count { it == '!' })
+                    scope.launch {
+                        addShoppingListItem(cartItem)
+                        setShoppingList(getShoppingList())
+                    }
+                }
+            }
+    )
+}
